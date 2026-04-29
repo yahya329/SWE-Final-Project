@@ -9,108 +9,144 @@ namespace MyDiary.Data
     {
         public bool CreateEntry(DiaryEntry entry)
         {
-            using (var conn = DbHelper.GetConnection())
+            try
             {
-                conn.Open();
-
-                string sql = @"INSERT INTO DiaryEntries (UserID, Title, Body, Mood, EntryDate)
-                               VALUES (:userid, :title, :body, :mood, :entrydate)";
-
-                using (var cmd = new OracleCommand(sql, conn))
+                using (var conn = DbHelper.GetConnection())
                 {
-                    cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = entry.UserID;
-                    cmd.Parameters.Add(":title", OracleDbType.Varchar2).Value = entry.Title;
-                    cmd.Parameters.Add(":body", OracleDbType.Clob).Value = entry.Body;
-                    cmd.Parameters.Add(":mood", OracleDbType.Varchar2).Value = entry.Mood;
-                    cmd.Parameters.Add(":entrydate", OracleDbType.Date).Value = entry.EntryDate;
+                    conn.Open();
 
-                    int rows = cmd.ExecuteNonQuery();
-                    return rows > 0; 
+                    string sql = @"INSERT INTO DiaryEntries (UserID, Title, Body, Mood, EntryDate)
+                                   VALUES (:userid, :title, :body, :mood, :entrydate)";
+
+                    using (var cmd = new OracleCommand(sql, conn))
+                    {
+                        cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = entry.UserID;
+                        cmd.Parameters.Add(":title", OracleDbType.Varchar2).Value = entry.Title;
+                        cmd.Parameters.Add(":body", OracleDbType.Clob).Value = entry.Body;
+                        cmd.Parameters.Add(":mood", OracleDbType.Varchar2).Value = entry.Mood;
+                        cmd.Parameters.Add(":entrydate", OracleDbType.Date).Value = entry.EntryDate;
+
+                        int rows = cmd.ExecuteNonQuery();
+                        return rows > 0;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error creating entry: " + ex.Message);
+                return false;
             }
         }
 
         public List<DiaryEntry> GetAllEntries(int userID)
         {
-            var entries = new List<DiaryEntry>();
-
-            using (var conn = DbHelper.GetConnection())
+            try
             {
-                conn.Open();
+                var entries = new List<DiaryEntry>();
 
-                string sql = @"SELECT EntryID, Title, Mood, EntryDate 
-                       FROM DiaryEntries 
-                       WHERE UserID = :userid 
-                       ORDER BY EntryDate DESC";
-
-                using (var cmd = new OracleCommand(sql, conn))
+                using (var conn = DbHelper.GetConnection())
                 {
-                    cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
+                    conn.Open();
 
-                    using (var reader = cmd.ExecuteReader())
+                    string sql = @"SELECT EntryID, Title, Mood, EntryDate 
+                           FROM DiaryEntries 
+                           WHERE UserID = :userid 
+                           ORDER BY EntryDate DESC";
+
+                    using (var cmd = new OracleCommand(sql, conn))
                     {
-                        while (reader.Read())
+                        cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
+
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            entries.Add(new DiaryEntry
+                            while (reader.Read())
                             {
-                                EntryID = reader.GetInt32(0),
-                                Title = reader.GetString(1),
-                                Mood = reader.GetString(2),
-                                EntryDate = reader.GetDateTime(3)
-                            });
+                                entries.Add(new DiaryEntry
+                                {
+                                    EntryID = reader.GetInt32(0),
+                                    Title = reader.GetString(1),
+                                    Mood = reader.GetString(2),
+                                    EntryDate = reader.GetDateTime(3)
+                                });
+                            }
                         }
                     }
                 }
+
+                return entries;
             }
 
-            return entries;
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error retrieving entries: " + ex.Message);
+                return new List<DiaryEntry>();
+            }
+
         }
 
         public bool UpdateEntry(DiaryEntry entry)
         {
-            using (var conn = DbHelper.GetConnection())
+            try
             {
-                conn.Open();
+                using (var conn = DbHelper.GetConnection())
+                {
+                    conn.Open();
 
-                string sql = @"UPDATE DiaryEntries 
+                    string sql = @"UPDATE DiaryEntries 
                        SET Title = :title, 
                            Body  = :body, 
                            Mood  = :mood
                        WHERE EntryID = :entryid 
                        AND UserID = :userid";
 
-                using (var cmd = new OracleCommand(sql, conn))
-                {
-                    cmd.Parameters.Add(":title", OracleDbType.Varchar2).Value = entry.Title;
-                    cmd.Parameters.Add(":body", OracleDbType.Clob).Value = entry.Body;
-                    cmd.Parameters.Add(":mood", OracleDbType.Varchar2).Value = entry.Mood;
-                    cmd.Parameters.Add(":entryid", OracleDbType.Int32).Value = entry.EntryID;
-                    cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = entry.UserID;
+                    using (var cmd = new OracleCommand(sql, conn))
+                    {
+                        cmd.Parameters.Add(":title", OracleDbType.Varchar2).Value = entry.Title;
+                        cmd.Parameters.Add(":body", OracleDbType.Clob).Value = entry.Body;
+                        cmd.Parameters.Add(":mood", OracleDbType.Varchar2).Value = entry.Mood;
+                        cmd.Parameters.Add(":entryid", OracleDbType.Int32).Value = entry.EntryID;
+                        cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = entry.UserID;
 
-                    int rows = cmd.ExecuteNonQuery();
-                    return rows > 0;
+                        int rows = cmd.ExecuteNonQuery();
+                        return rows > 0;
+                    }
                 }
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error updating entry: " + ex.Message);
+                return false;
             }
         }
 
         public bool DeleteEntry(int entryID, int userID)
         {
-            using (var conn = DbHelper.GetConnection())
+            try
             {
-                conn.Open();
+                using (var conn = DbHelper.GetConnection())
+                {
+                    conn.Open();
 
-                string sql = @"DELETE FROM DiaryEntries 
+                    string sql = @"DELETE FROM DiaryEntries 
                        WHERE EntryID = :entryid 
                        AND UserID = :userid";
 
-                using (var cmd = new OracleCommand(sql, conn))
-                {
-                    cmd.Parameters.Add(":entryid", OracleDbType.Int32).Value = entryID;
-                    cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
+                    using (var cmd = new OracleCommand(sql, conn))
+                    {
+                        cmd.Parameters.Add(":entryid", OracleDbType.Int32).Value = entryID;
+                        cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
 
-                    int rows = cmd.ExecuteNonQuery();
-                    return rows > 0;
+                        int rows = cmd.ExecuteNonQuery();
+                        return rows > 0;
+                    }
                 }
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error deleting entry: " + ex.Message);
+                return false;
             }
         }
 
@@ -118,57 +154,66 @@ namespace MyDiary.Data
         public List<DiaryEntry> Search(int userID, string keyword, DateTime? startDate, DateTime? endDate)
         {
             var entries = new List<DiaryEntry>();
-
-            using (var conn = DbHelper.GetConnection())
+            try
             {
-                conn.Open();
 
-                string sql = @"SELECT EntryID, Title, Mood, EntryDate 
+                using (var conn = DbHelper.GetConnection())
+                {
+                    conn.Open();
+
+                    string sql = @"SELECT EntryID, Title, Mood, EntryDate 
                        FROM DiaryEntries 
                        WHERE UserID = :userid";
 
-                // add keyword filter only if user typed something
-                if (!string.IsNullOrEmpty(keyword))
-                    sql += " AND (UPPER(Title) LIKE UPPER(:keyword) OR UPPER(Body) LIKE UPPER(:keyword))";
-
-                // add date filter only if user entered dates
-                if (startDate.HasValue && endDate.HasValue)
-                    sql += " AND EntryDate BETWEEN :startdate AND :enddate";
-
-                sql += " ORDER BY EntryDate DESC";
-
-                using (var cmd = new OracleCommand(sql, conn))
-                {
-                    // always add userid
-                    cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
-
-                    // only add keyword param if it was used
+                    // add keyword filter only if user typed something
                     if (!string.IsNullOrEmpty(keyword))
-                        cmd.Parameters.Add(":keyword", OracleDbType.Varchar2).Value = "%" + keyword + "%";
+                        sql += " AND (UPPER(Title) LIKE UPPER(:keyword) OR UPPER(Body) LIKE UPPER(:keyword))";
 
-                    // only add date params if they were used
+                    // add date filter only if user entered dates
                     if (startDate.HasValue && endDate.HasValue)
-                    {
-                        cmd.Parameters.Add(":startdate", OracleDbType.Date).Value = startDate.Value;
-                        cmd.Parameters.Add(":enddate", OracleDbType.Date).Value = endDate.Value;
-                    }
+                        sql += " AND EntryDate BETWEEN :startdate AND :enddate";
 
-                    using (var reader = cmd.ExecuteReader())
+                    sql += " ORDER BY EntryDate DESC";
+
+                    using (var cmd = new OracleCommand(sql, conn))
                     {
-                        while (reader.Read())
+                        // always add userid
+                        cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
+
+                        // only add keyword param if it was used
+                        if (!string.IsNullOrEmpty(keyword))
+                            cmd.Parameters.Add(":keyword", OracleDbType.Varchar2).Value = "%" + keyword + "%";
+
+                        // only add date params if they were used
+                        if (startDate.HasValue && endDate.HasValue)
                         {
-                            entries.Add(new DiaryEntry
+                            cmd.Parameters.Add(":startdate", OracleDbType.Date).Value = startDate.Value;
+                            cmd.Parameters.Add(":enddate", OracleDbType.Date).Value = endDate.Value;
+                        }
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
                             {
-                                EntryID = reader.GetInt32(0),
-                                Title = reader.GetString(1),
-                                Mood = reader.GetString(2),
-                                EntryDate = reader.GetDateTime(3)
-                            });
+                                entries.Add(new DiaryEntry
+                                {
+                                    EntryID = reader.GetInt32(0),
+                                    Title = reader.GetString(1),
+                                    Mood = reader.GetString(2),
+                                    EntryDate = reader.GetDateTime(3)
+                                });
+                            }
                         }
                     }
                 }
+
+                return entries;
             }
 
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
             return entries;
         }
 
@@ -183,36 +228,45 @@ namespace MyDiary.Data
                 { "Anxious", 0 }
             };
 
-            using (var conn = DbHelper.GetConnection())
+            try
             {
-                conn.Open();
+                using (var conn = DbHelper.GetConnection())
+                {
+                    conn.Open();
 
-                string sql = @"SELECT Mood, COUNT(*) 
+                    string sql = @"SELECT Mood, COUNT(*) 
                        FROM DiaryEntries
                        WHERE UserID = :userid
                        AND EXTRACT(MONTH FROM EntryDate) = EXTRACT(MONTH FROM SYSDATE)
                        AND EXTRACT(YEAR FROM EntryDate)  = EXTRACT(YEAR FROM SYSDATE)
                        GROUP BY Mood";
 
-                using (var cmd = new OracleCommand(sql, conn))
-                {
-                    cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
-
-                    using (var reader = cmd.ExecuteReader())
+                    using (var cmd = new OracleCommand(sql, conn))
                     {
-                        while (reader.Read())
-                        {
-                            string mood = reader.GetString(0);
-                            int count = reader.GetInt32(1);
+                        cmd.Parameters.Add(":userid", OracleDbType.Int32).Value = userID;
 
-                            // update the count for this mood
-                            if (summary.ContainsKey(mood))
-                                summary[mood] = count;
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string mood = reader.GetString(0);
+                                int count = reader.GetInt32(1);
+
+                                // update the count for this mood
+                                if (summary.ContainsKey(mood))
+                                    summary[mood] = count;
+                            }
                         }
                     }
                 }
             }
 
+            
+
+            catch (Exception ex)
+            {
+                Console.WriteLine("❌ Database error: " + ex.Message);
+            }
             return summary;
         }
 
