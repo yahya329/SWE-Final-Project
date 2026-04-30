@@ -84,5 +84,15 @@ namespace MyDiary.Services
         {
             return _repo.GetMoodSummary(userID);
         }
+
+        public DiaryEntry GetEntryByID(int entryID)
+        {
+            return _repo.GetEntryByID(entryID);
+        }
+
+        public bool UpdateDisconnected(int id, string title, string mood)
+        {
+            return _repo.SaveChanges(id, title, mood);
+        }
     }
 }

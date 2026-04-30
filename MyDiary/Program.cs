@@ -52,7 +52,6 @@ namespace MyDiary
                 else Console.WriteLine("Invalid option.");
             }
 
-            
             DiaryMenu();
         }
 
@@ -109,33 +108,44 @@ namespace MyDiary
                 Console.WriteLine($"{i}. [{entry.EntryDate:dd-MMM-yyyy}] {entry.Title} | {entry.Mood}");
                 i++;
             }
+
+            // Option menu 
+            Console.WriteLine("\n--- Actions ---");
+            Console.WriteLine("1. Edit ");
+            Console.WriteLine("2. Delete ");
+            Console.WriteLine("0. Back to Main Menu");
+            Console.Write("Choose: ");
+            string action = Console.ReadLine();
+
+            if (action == "1")
+            {
+                DoUpdateEntry(diaryService); 
+            }
+            else if (action == "2")
+            {
+                DoDeleteEntry(diaryService); 
+            }
         }
 
         static void DiaryMenu()
         {
             var diaryService = new DiaryService();
 
-            ShowAllEntries(diaryService);
-
             while (true)
             {
                 Console.WriteLine($"\n=== Welcome, {currentUser.Username} ===");
-                Console.WriteLine("1. Write new entry");
-                //Console.WriteLine("2. View all entries");
-                Console.WriteLine("2. Search entries");
-                Console.WriteLine("3. Mood summary");
-                Console.WriteLine("4. Update entry");  
-                Console.WriteLine("5. Delete entry");  
+                Console.WriteLine("1. Add new entry");
+                Console.WriteLine("2. View My entries");
+                Console.WriteLine("3. Search ");
+                Console.WriteLine("4. Mood summary");
                 Console.WriteLine("0. Exit");
                 Console.Write("Choose: ");
                 string choice = Console.ReadLine();
 
                 if (choice == "1") DoCreateEntry(diaryService);
-                //else if (choice == "2") ShowAllEntries(diaryService);
-                else if (choice == "2") DoSearch(diaryService);
-                else if (choice == "3") ShowMoodSummary(diaryService);
-                else if (choice == "4") DoUpdateEntry(diaryService);
-                else if (choice == "5") DoDeleteEntry(diaryService);
+                else if (choice == "2") ShowAllEntries(diaryService);
+                else if (choice == "3") DoSearch(diaryService);
+                else if (choice == "4") ShowMoodSummary(diaryService);
                 else if (choice == "0") break;
                 else Console.WriteLine("Invalid option.");
             }
@@ -162,8 +172,7 @@ namespace MyDiary
 
         static void DoUpdateEntry(DiaryService diaryService)
         {
-            // first show all entries so user knows the IDs
-            ShowAllEntries(diaryService);
+
 
             Console.Write("\nEnter Entry ID to update: ");
             if (!int.TryParse(Console.ReadLine(), out int entryID))
@@ -172,32 +181,49 @@ namespace MyDiary
                 return;
             }
 
-            Console.Write("New Title: ");
+            // USE GetEntryByID SP here — fetch existing data first
+            var existing = diaryService.GetEntryByID(entryID);
+            if (existing == null)
+            {
+                Console.WriteLine(" Entry not found.");
+                return;
+            }
+
+            //data u want to update, if user press enter, keep old value
+            Console.WriteLine($"\n--- Current Entry ---");
+            Console.WriteLine($"Title : {existing.Title}");
+            Console.WriteLine($"Mood  : {existing.Mood}");
+            Console.WriteLine($"Date  : {existing.EntryDate:dd-MMM-yyyy}");
+            Console.WriteLine($"---------------------");
+
+            
+            Console.Write("New Title (Enter to keep current): ");
             string title = Console.ReadLine();
+            if (string.IsNullOrEmpty(title)) title = existing.Title;
 
-            Console.Write("New Body: ");
+            Console.Write("New Body (Enter to keep current): ");
             string body = Console.ReadLine();
+            if (string.IsNullOrEmpty(body)) body = existing.Body;
 
-            Console.Write("New Mood (Happy / Sad / Neutral / Anxious): ");
+            Console.Write("New Mood (Enter to keep current): ");
             string mood = Console.ReadLine();
+            if (string.IsNullOrEmpty(mood)) mood = existing.Mood;
 
             bool success = diaryService.UpdateEntry(currentUser.UserID, entryID, title, body, mood);
 
             if (success)
                 Console.WriteLine(" Entry updated successfully!");
             else
-                Console.WriteLine(" Entry not found ");
+                Console.WriteLine(" Update failed.");
         }
 
         static void DoDeleteEntry(DiaryService diaryService)
         {
-            // first show all entries so user knows the IDs
-            ShowAllEntries(diaryService);
 
             Console.Write("\nEnter Entry ID to delete: ");
             if (!int.TryParse(Console.ReadLine(), out int entryID))
             {
-                Console.WriteLine("❌ Invalid ID.");
+                Console.WriteLine(" Invalid ID.");
                 return;
             }
 
@@ -245,6 +271,35 @@ namespace MyDiary
             {
                 Console.WriteLine($"{i}. [{entry.EntryDate:dd-MMM-yyyy}] {entry.Title} | {entry.Mood}");
                 i++;
+            }
+
+            
+            Console.WriteLine("\n--- Actions ---");
+            Console.WriteLine("1. Edit an entry");
+            Console.WriteLine("2. Delete an entry");
+            Console.WriteLine("0. Back to Main Menu");
+            Console.Write("Choose: ");
+            string action = Console.ReadLine();
+
+            if (action == "1") 
+            {
+                Console.Write("Enter ID to Edit: ");
+                int id = int.Parse(Console.ReadLine());
+
+                // 1. Get new data from user
+                Console.Write("New Title: ");
+                string title = Console.ReadLine();
+                Console.Write("New Mood: ");
+                string mood = Console.ReadLine();
+
+                // 2. Call the Disconnected Save method
+                bool success = diaryService.UpdateDisconnected(id, title, mood);
+
+                if (success) Console.WriteLine("Updated using Disconnected CommandBuilder!");
+            }
+            else if (action == "2")
+            {
+                DoDeleteEntry(diaryService); 
             }
         }
 
